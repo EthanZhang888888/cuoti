@@ -373,13 +373,24 @@
             cursor: not-allowed;
         }
         @keyframes pulse {
-            0%,
-            100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.3;
-            }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* 语音状态提示 */
+        .voice-status {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 2px;
+            min-height: 18px;
+            transition: all 0.3s;
+        }
+        .voice-status.active {
+            color: #EF4444;
+            font-weight: 500;
+        }
+        .voice-status.done {
+            color: #16A34A;
         }
 
         .btn-ai {
@@ -775,6 +786,7 @@
                                 <textarea id="question" rows="2" placeholder="输入题目内容..." required></textarea>
                                 <button type="button" class="voice-btn" data-target="question">🎤</button>
                             </div>
+                            <div class="voice-status" id="status-question"></div>
                         </div>
 
                         <div class="form-row">
@@ -784,6 +796,7 @@
                                     <textarea id="wrongAnswer" rows="2" placeholder="输入你写错的答案..." required></textarea>
                                     <button type="button" class="voice-btn" data-target="wrongAnswer">🎤</button>
                                 </div>
+                                <div class="voice-status" id="status-wrongAnswer"></div>
                             </div>
                             <div class="form-group">
                                 <label>正确答案 *</label>
@@ -791,6 +804,7 @@
                                     <textarea id="correctAnswer" rows="2" placeholder="输入正确答案..." required></textarea>
                                     <button type="button" class="voice-btn" data-target="correctAnswer">🎤</button>
                                 </div>
+                                <div class="voice-status" id="status-correctAnswer"></div>
                             </div>
                         </div>
 
@@ -800,6 +814,7 @@
                                 <textarea id="analysis" rows="2" placeholder="输入解析内容，或点击AI解析按钮自动生成..."></textarea>
                                 <button type="button" class="voice-btn" data-target="analysis">🎤</button>
                             </div>
+                            <div class="voice-status" id="status-analysis"></div>
                             <button type="button" id="aiAnalyzeBtn" class="btn-ai">🤖 AI智能解析</button>
                         </div>
 
@@ -893,14 +908,12 @@
                 users[user.username].wrongAnswers = list;
                 this.saveUsers(users);
             },
-            // 获取当前用户的完整数据（用于导出）
             getCurrentUserFullData() {
                 const user = this.getCurrentUser();
                 if (!user) return null;
                 const users = this.getUsers();
                 return users[user.username] || null;
             },
-            // 导入数据（覆盖当前用户）
             importUserData(data) {
                 const user = this.getCurrentUser();
                 if (!user) return false;
@@ -946,13 +959,27 @@
         }
 
         // ============================================================
-        //  语音识别（优化版）
+        //  语音识别（优化版 - 只取最终结果）
         // ============================================================
 
         let recognition = null;
         let currentVoiceTarget = null;
         let isRecording = false;
         let voiceSupported = null;
+        let finalResult = '';
+        let statusTimer = null;
+
+        function getStatusEl(targetId) {
+            return document.getElementById('status-' + targetId);
+        }
+
+        function setVoiceStatus(targetId, text, className) {
+            const el = getStatusEl(targetId);
+            if (el) {
+                el.textContent = text;
+                el.className = 'voice-status' + (className ? ' ' + className : '');
+            }
+        }
 
         function checkVoiceSupport() {
             if (voiceSupported !== null) return voiceSupported;
@@ -983,17 +1010,19 @@
 
             // 如果正在录音，停止
             if (isRecording) {
-                stopVoiceRecording();
+                stopVoiceRecording(true);
                 return;
             }
 
             // 确保旧的识别器已清理
             if (recognition) {
-                try {
-                    recognition.abort();
-                } catch (e) { /* ignore */ }
+                try { recognition.abort(); } catch (e) {}
                 recognition = null;
             }
+
+            // 清空之前的状态
+            finalResult = '';
+            setVoiceStatus(targetId, '🎤 正在听...', 'active');
 
             // 创建新的识别器
             recognition = createRecognition();
@@ -1010,7 +1039,7 @@
                     btn.classList.add('recording');
                     btn.disabled = false;
                 }
-                showToast('🎤 请开始说话...', '');
+                setVoiceStatus(targetId, '🎤 请开始说话...', 'active');
             };
 
             recognition.onresult = function(e) {
@@ -1023,17 +1052,14 @@
                         interim += e.results[i][0].transcript;
                     }
                 }
-                const text = final || interim;
-                if (currentVoiceTarget && text) {
-                    const el = document.getElementById(currentVoiceTarget);
-                    if (el) {
-                        const existing = el.value;
-                        el.value = existing ? existing + (existing.endsWith('\n') ? '' : '\n') + text : text;
-                        el.dispatchEvent(new Event('input'));
-                        // 自动调整高度
-                        el.style.height = 'auto';
-                        el.style.height = el.scrollHeight + 'px';
-                    }
+                // 只保存最终结果
+                if (final) {
+                    finalResult = final;
+                    // 实时显示最终结果（但不覆盖输入框）
+                    setVoiceStatus(targetId, '✅ 已识别：' + final, 'done');
+                } else if (interim) {
+                    // 显示中间状态（但不写入输入框）
+                    setVoiceStatus(targetId, '⏳ ' + interim, 'active');
                 }
             };
 
@@ -1041,22 +1067,46 @@
                 console.warn('语音识别错误:', e.error);
                 if (e.error === 'not-allowed') {
                     showToast('请允许浏览器使用麦克风权限', 'error');
+                    setVoiceStatus(targetId, '❌ 权限被拒绝', '');
                 } else if (e.error === 'no-speech') {
+                    setVoiceStatus(targetId, '❌ 没有检测到语音，请重试', '');
                     showToast('没有检测到语音，请重试', 'error');
                 } else if (e.error === 'audio-capture') {
                     showToast('无法访问麦克风，请检查设备', 'error');
+                    setVoiceStatus(targetId, '❌ 麦克风不可用', '');
                 } else {
-                    showToast('语音识别失败: ' + e.error, 'error');
+                    setVoiceStatus(targetId, '❌ ' + e.error, '');
                 }
-                stopVoiceRecording();
+                stopVoiceRecording(false);
             };
 
             recognition.onend = function() {
-                stopVoiceRecording();
-                if (isRecording) {
-                    // 如果因为某些原因没触发 stop，这里兜底
-                    isRecording = false;
+                // 如果有最终结果，写入输入框
+                if (finalResult && currentVoiceTarget) {
+                    const el = document.getElementById(currentVoiceTarget);
+                    if (el) {
+                        const existing = el.value;
+                        el.value = existing ? existing + (existing.endsWith('\n') ? '' : '\n') + finalResult : finalResult;
+                        el.dispatchEvent(new Event('input'));
+                        el.style.height = 'auto';
+                        el.style.height = el.scrollHeight + 'px';
+                        setVoiceStatus(currentVoiceTarget, '✅ 已录入：' + finalResult, 'done');
+                        showToast('✅ 语音录入完成', 'success');
+                    }
+                } else if (isRecording && currentVoiceTarget) {
+                    // 没有结果，显示提示
+                    setVoiceStatus(currentVoiceTarget, '⏳ 未识别到有效语音，请重试', '');
                 }
+                // 延迟清除状态
+                clearTimeout(statusTimer);
+                statusTimer = setTimeout(() => {
+                    const el = getStatusEl(currentVoiceTarget);
+                    if (el && !el.textContent.includes('已录入')) {
+                        el.textContent = '';
+                        el.className = 'voice-status';
+                    }
+                }, 4000);
+                stopVoiceRecording(false);
             };
 
             try {
@@ -1064,11 +1114,11 @@
             } catch (e) {
                 console.warn('启动语音失败:', e);
                 showToast('启动语音失败，请重试', 'error');
-                stopVoiceRecording();
+                stopVoiceRecording(false);
             }
         }
 
-        function stopVoiceRecording() {
+        function stopVoiceRecording(showStopMsg) {
             isRecording = false;
             const btn = document.querySelector(`.voice-btn[data-target="${currentVoiceTarget}"]`);
             if (btn) {
@@ -1076,12 +1126,19 @@
                 btn.disabled = false;
             }
             if (recognition) {
-                try {
-                    recognition.abort();
-                } catch (e) { /* ignore */ }
+                try { recognition.abort(); } catch (e) {}
                 recognition = null;
             }
-            // 不显示 Toast，避免干扰
+            if (showStopMsg && currentVoiceTarget) {
+                const statusEl = getStatusEl(currentVoiceTarget);
+                if (statusEl && !statusEl.textContent.includes('已录入')) {
+                    setVoiceStatus(currentVoiceTarget, '⏹️ 已停止', '');
+                    setTimeout(() => {
+                        if (statusEl) { statusEl.textContent = '';
+                            statusEl.className = 'voice-status'; }
+                    }, 2000);
+                }
+            }
         }
 
         // ============================================================
@@ -1378,6 +1435,11 @@
             document.getElementById('wrongForm').reset();
             document.getElementById('subject').value = '';
             document.getElementById('errorType').value = '未分类';
+            // 清空所有语音状态
+            document.querySelectorAll('.voice-status').forEach(el => {
+                el.textContent = '';
+                el.className = 'voice-status';
+            });
             currentPage = 1;
             renderAll();
         }
@@ -1516,7 +1578,6 @@
             reader.onload = function(e) {
                 try {
                     const data = JSON.parse(e.target.result);
-                    // 校验数据结构
                     if (!data.data || typeof data.data !== 'object') {
                         showToast('无效的备份文件格式', 'error');
                         return;
@@ -1619,9 +1680,8 @@
 
         function handleLogout() {
             if (confirm('确定要退出吗？')) {
-                // 停止任何正在进行的语音
                 if (isRecording) {
-                    stopVoiceRecording();
+                    stopVoiceRecording(true);
                 }
                 DB.clearCurrentUser();
                 document.getElementById('mainPage').style.display = 'none';
@@ -1719,10 +1779,9 @@
                 if (this.files && this.files.length > 0) {
                     importData(this.files[0]);
                 }
-                this.value = ''; // 重置，允许重复选择同一文件
+                this.value = '';
             });
 
-            // 回车快捷提交
             document.querySelectorAll('.auth-form input').forEach(inp => {
                 inp.addEventListener('keydown', function(e) {
                     if (e.key === 'Enter') {
