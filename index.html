@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📚 我的错题本</title>
+    <style>
+        /* ===== 全局样式 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --primary: #4F46E5;
+            --primary-dark: #4338CA;
+            --primary-light: #818CF8;
+            --bg: #F3F4F6;
+            --card-bg: #FFFFFF;
+            --text: #1F2937;
+            --text-light: #6B7280;
+            --border: #E5E7EB;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            --radius: 16px;
+            --radius-sm: 10px;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ===== 登录页 ===== */
+        #loginPage {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+            padding: 20px;
+        }
+        .auth-box {
+            background: var(--card-bg);
+            padding: 48px 40px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 420px;
+        }
+        .auth-box h1 {
+            text-align: center;
+            font-size: 28px;
+            color: var(--primary);
+            margin-bottom: 2px;
+        }
+        .auth-box .subtitle {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+        .auth-tabs {
+            display: flex;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: var(--card-bg);
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-light);
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        .auth-form {
+            display: none;
+        }
+        .auth-form.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 14px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 50px;
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+        .msg {
+            margin-top: 12px;
+            padding: 10px;
+            border-radius: var(--radius-sm);
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+        .msg.success {
+            display: block;
+            background: #D1FAE5;
+            color: #065F46;
+        }
+        .msg.error {
+            display: block;
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        /* ===== 主页面 ===== */
+        #mainPage {
+            display: none;
+        }
+        .navbar {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+        }
+        .nav-brand {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .nav-user {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .nav-user span {
+            font-weight: 500;
+        }
+        .btn-logout {
+            padding: 5px 14px;
+            background: #FEE2E2;
+            color: #991B1B;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+        .btn-logout:hover {
+            background: #FECACA;
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 20px;
+        }
+
+        /* 侧边栏 */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .stats-card {
+            background: var(--card-bg);
+            padding: 18px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+        .stats-card h3 {
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+        .stats-card p {
+            font-size: 13px;
+            color: var(--text-light);
+            padding: 3px 0;
+            border-bottom: 1px solid var(--bg);
+        }
+        .stats-card p:last-child {
+            border-bottom: none;
+        }
+        .stats-card .stat-total {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        .subject-filter {
+            background: var(--card-bg);
+            padding: 18px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+        .subject-filter h4 {
+            font-size: 14px;
+            color: var(--text-light);
+            margin-bottom: 8px;
+        }
+        .filter-btn {
+            display: block;
+            width: 100%;
+            padding: 5px 12px;
+            border: none;
+            background: var(--bg);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            text-align: left;
+            font-size: 13px;
+            margin-bottom: 3px;
+            transition: all 0.3s;
+        }
+        .filter-btn:hover {
+            background: #E5E7EB;
+        }
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* 主内容 */
+        .content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .add-section {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+        .list-section {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .section-header h2 {
+            font-size: 18px;
+        }
+        .btn-toggle {
+            padding: 3px 14px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+        .btn-toggle:hover {
+            background: var(--bg);
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        .input-with-voice {
+            position: relative;
+        }
+        .input-with-voice textarea {
+            padding-right: 44px;
+        }
+        .voice-btn {
+            position: absolute;
+            right: 6px;
+            top: 6px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+            transition: all 0.3s;
+        }
+        .voice-btn:hover {
+            background: var(--bg);
+        }
+        .voice-btn.recording {
+            color: #EF4444;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .btn-ai {
+            padding: 6px 18px;
+            background: linear-gradient(135deg, #8B5CF6, #6D28D9);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s;
+            margin-top: 6px;
+        }
+        .btn-ai:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(109, 40, 217, 0.3);
+        }
+
+        .list-controls {
+            font-size: 13px;
+            color: var(--text-light);
+        }
+
+        .wrong-list {
+            min-height: 150px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-light);
+            font-size: 15px;
+        }
+        .wrong-item {
+            padding: 14px 18px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+        .wrong-item:hover {
+            border-color: var(--primary-light);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            transform: translateY(-1px);
+        }
+        .wrong-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .wrong-item-subject {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 13px;
+        }
+        .wrong-item-time {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+        .wrong-item-question {
+            font-size: 14px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .wrong-item-tags {
+            display: flex;
+            gap: 6px;
+            margin-top: 4px;
+            flex-wrap: wrap;
+        }
+        .tag {
+            font-size: 12px;
+            padding: 1px 10px;
+            border-radius: 20px;
+            background: var(--bg);
+            color: var(--text-light);
+        }
+        .tag-error-type {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+        .tag-wrong {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+        .tag-correct {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+        .pagination button {
+            padding: 4px 12px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+        }
+        .pagination button:hover {
+            background: var(--bg);
+        }
+        .pagination button.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .pagination button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal-content {
+            background: var(--card-bg);
+            padding: 28px;
+            border-radius: var(--radius);
+            max-width: 560px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            font-size: 28px;
+            cursor: pointer;
+            color: var(--text-light);
+            transition: all 0.3s;
+        }
+        .modal-close:hover {
+            color: var(--text);
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+        .modal-actions button {
+            padding: 6px 18px;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .btn-edit {
+            background: #E0E7FF;
+            color: var(--primary);
+        }
+        .btn-edit:hover {
+            background: #C7D2FE;
+        }
+        .btn-delete {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+        .btn-delete:hover {
+            background: #FECACA;
+        }
+
+        #detailContent p {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+        #detailContent .detail-label {
+            font-weight: 600;
+            color: var(--text);
+        }
+        #detailContent .detail-wrong {
+            color: #DC2626;
+        }
+        #detailContent .detail-correct {
+            color: #16A34A;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 1024px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        @media (max-width: 640px) {
+            .sidebar {
+                grid-template-columns: 1fr;
+            }
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .auth-box {
+                padding: 32px 20px;
+            }
+            .modal-content {
+                padding: 20px;
+            }
+            .nav-container {
+                flex-wrap: wrap;
+                height: auto;
+                padding: 10px 0;
+            }
+            .auth-box h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== 登录页 ==================== -->
+    <div id="loginPage">
+        <div class="auth-box">
+            <h1>📚 错题本</h1>
+            <p class="subtitle">记录 · 分析 · 进步</p>
+            <div class="auth-tabs">
+                <button class="tab-btn active" data-tab="login">登录</button>
+                <button class="tab-btn" data-tab="register">注册</button>
+            </div>
+
+            <!-- 登录 -->
+            <form id="loginForm" class="auth-form active">
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input type="text" id="loginUsername" placeholder="请输入用户名" required>
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="loginPassword" placeholder="请输入密码" required>
+                </div>
+                <button type="submit" class="btn-primary">登 录</button>
+            </form>
+
+            <!-- 注册 -->
+            <form id="registerForm" class="auth-form">
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input type="text" id="registerUsername" placeholder="请输入用户名" required>
+                </div>
+                <div class="form-group">
+                    <label>邮箱</label>
+                    <input type="email" id="registerEmail" placeholder="请输入邮箱" required>
+                </div>
+                <div class="form-group">
+                    <label>密码（至少6位）</label>
+                    <input type="password" id="registerPassword" placeholder="请输入密码" required>
+                </div>
+                <button type="submit" class="btn-primary">注 册</button>
+            </form>
+
+            <div id="authMsg" class="msg"></div>
+        </div>
+    </div>
+
+    <!-- ==================== 主页面 ==================== -->
+    <div id="mainPage">
+        <!-- 导航栏 -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-brand">📚 错题本</div>
+                <div class="nav-user">
+                    <span id="usernameDisplay">用户</span>
+                    <button id="logoutBtn" class="btn-logout">退出</button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="main-container">
+            <!-- 侧边栏 -->
+            <aside class="sidebar">
+                <div class="stats-card">
+                    <h3>📊 统计</h3>
+                    <div id="statsContent">
+                        <p>加载中...</p>
+                    </div>
+                </div>
+                <div class="subject-filter">
+                    <h4>📁 学科筛选</h4>
+                    <button class="filter-btn active" data-subject="all">📋 全部</button>
+                    <div id="subjectList"></div>
+                </div>
+            </aside>
+
+            <!-- 主内容 -->
+            <main class="content">
+                <!-- 添加错题 -->
+                <section class="add-section">
+                    <div class="section-header">
+                        <h2>✏️ 添加错题</h2>
+                        <button id="toggleFormBtn" class="btn-toggle">收起</button>
+                    </div>
+                    <form id="wrongForm" class="wrong-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>学科 *</label>
+                                <select id="subject" required>
+                                    <option value="">请选择</option>
+                                    <option value="数学">数学</option>
+                                    <option value="语文">语文</option>
+                                    <option value="英语">英语</option>
+                                    <option value="物理">物理</option>
+                                    <option value="化学">化学</option>
+                                    <option value="生物">生物</option>
+                                    <option value="历史">历史</option>
+                                    <option value="地理">地理</option>
+                                    <option value="政治">政治</option>
+                                    <option value="其他">其他</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>错题类型</label>
+                                <select id="errorType">
+                                    <option value="未分类">未分类</option>
+                                    <option value="概念不清">概念不清</option>
+                                    <option value="计算失误">计算失误</option>
+                                    <option value="审题错误">审题错误</option>
+                                    <option value="公式记错">公式记错</option>
+                                    <option value="粗心大意">粗心大意</option>
+                                    <option value="理解偏差">理解偏差</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>题目 *</label>
+                            <div class="input-with-voice">
+                                <textarea id="question" rows="2" placeholder="输入题目内容..." required></textarea>
+                                <button type="button" class="voice-btn" data-target="question">🎤</button>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>我的错误答案 *</label>
+                                <div class="input-with-voice">
+                                    <textarea id="wrongAnswer" rows="2" placeholder="输入你写错的答案..." required></textarea>
+                                    <button type="button" class="voice-btn" data-target="wrongAnswer">🎤</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>正确答案 *</label>
+                                <div class="input-with-voice">
+                                    <textarea id="correctAnswer" rows="2" placeholder="输入正确答案..." required></textarea>
+                                    <button type="button" class="voice-btn" data-target="correctAnswer">🎤</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>解析（可选）</label>
+                            <div class="input-with-voice">
+                                <textarea id="analysis" rows="2" placeholder="输入解析内容，或点击AI解析按钮自动生成..."></textarea>
+                                <button type="button" class="voice-btn" data-target="analysis">🎤</button>
+                            </div>
+                            <button type="button" id="aiAnalyzeBtn" class="btn-ai">🤖 AI智能解析</button>
+                        </div>
+
+                        <button type="submit" class="btn-primary">✅ 添加错题</button>
+                    </form>
+                </section>
+
+                <!-- 错题列表 -->
+                <section class="list-section">
+                    <div class="section-header">
+                        <h2>📖 我的错题</h2>
+                        <div class="list-controls">
+                            <span id="totalCount">共 0 题</span>
+                        </div>
+                    </div>
+                    <div id="wrongList" class="wrong-list">
+                        <div class="empty-state">📭 暂无错题，赶快添加吧！</div>
+                    </div>
+                    <div id="pagination" class="pagination"></div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- ==================== 详情弹窗 ==================== -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" id="modalClose">&times;</span>
+            <div id="detailContent"></div>
+            <div class="modal-actions">
+                <button id="editBtn" class="btn-edit">✏️ 编辑</button>
+                <button id="deleteBtn" class="btn-delete">🗑️ 删除</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        //  ======================== 全部 JS 逻辑 ========================
+        // ============================================================
+
+        // ===== 数据层 =====
+        const DB = {
+            getUsers() {
+                try {
+                    return JSON.parse(localStorage.getItem('wrongBookUsers')) || {};
+                } catch { return {}; }
+            },
+            saveUsers(users) {
+                localStorage.setItem('wrongBookUsers', JSON.stringify(users));
+            },
+            getCurrentUser() {
+                const name = localStorage.getItem('wrongBookCurrentUser');
+                if (!name) return null;
+                const users = this.getUsers();
+                return users[name] ? { ...users[name], username: name } : null;
+            },
+            setCurrentUser(username) {
+                localStorage.setItem('wrongBookCurrentUser', username);
+            },
+            clearCurrentUser() {
+                localStorage.removeItem('wrongBookCurrentUser');
+            },
+            getUserData(username) {
+                const users = this.getUsers();
+                return users[username] || null;
+            },
+            saveUserData(username, data) {
+                const users = this.getUsers();
+                users[username] = data;
+                this.saveUsers(users);
+            },
+            // 获取当前用户的错题列表
+            getWrongAnswers() {
+                const user = this.getCurrentUser();
+                if (!user) return [];
+                return user.wrongAnswers || [];
+            },
+            // 保存错题列表
+            saveWrongAnswers(list) {
+                const user = this.getCurrentUser();
+                if (!user) return;
+                const users = this.getUsers();
+                users[user.username].wrongAnswers = list;
+                this.saveUsers(users);
+            }
+        };
+
+        // ===== 工具函数 =====
+        function formatTime(ts) {
+            const d = new Date(ts);
+            const pad = n => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
+
+        function generateId() {
+            return Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+        }
+
+        function showAuthMsg(text, type) {
+            const el = document.getElementById('authMsg');
+            el.textContent = text;
+            el.className = 'msg ' + type;
+            el.style.display = 'block';
+        }
+
+        function hideAuthMsg() {
+            const el = document.getElementById('authMsg');
+            el.style.display = 'none';
+        }
+
+        // ===== 语音识别 =====
+        let recognition = null;
+        let currentVoiceTarget = null;
+
+        function initSpeech() {
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SR) {
+                console.warn('浏览器不支持语音识别');
+                return;
+            }
+            recognition = new SR();
+            recognition.lang = 'zh-CN';
+            recognition.continuous = false;
+            recognition.interimResults = true;
+
+            recognition.onresult = function(e) {
+                let final = '';
+                let interim = '';
+                for (let i = e.resultIndex; i < e.results.length; i++) {
+                    if (e.results[i].isFinal) {
+                        final += e.results[i][0].transcript;
+                    } else {
+                        interim += e.results[i][0].transcript;
+                    }
+                }
+                const text = final || interim;
+                if (currentVoiceTarget) {
+                    const el = document.getElementById(currentVoiceTarget);
+                    if (el) {
+                        const existing = el.value;
+                        el.value = existing ? existing + '\n' + text : text;
+                        // 触发 input 事件以便其他逻辑感知
+                        el.dispatchEvent(new Event('input'));
+                    }
+                }
+            };
+
+            recognition.onend = function() {
+                const btn = document.querySelector(`.voice-btn[data-target="${currentVoiceTarget}"]`);
+                if (btn) btn.classList.remove('recording');
+            };
+
+            recognition.onerror = function(e) {
+                console.warn('语音识别错误:', e.error);
+                const btn = document.querySelector(`.voice-btn[data-target="${currentVoiceTarget}"]`);
+                if (btn) btn.classList.remove('recording');
+                if (e.error === 'not-allowed') {
+                    alert('请允许浏览器使用麦克风权限后重试');
+                }
+            };
+        }
+
+        function toggleVoice(targetId) {
+            if (!recognition) {
+                alert('您的浏览器不支持语音识别，请使用 Chrome 或 Edge 浏览器');
+                return;
+            }
+            const btn = document.querySelector(`.voice-btn[data-target="${targetId}"]`);
+            if (!btn) return;
+
+            // 如果正在录音，停止
+            if (btn.classList.contains('recording')) {
+                recognition.stop();
+                return;
+            }
+
+            // 开始录音
+            currentVoiceTarget = targetId;
+            try {
+                recognition.start();
+                btn.classList.add('recording');
+            } catch (e) {
+                console.warn('启动语音失败:', e);
+            }
+        }
+
+        // ===== 规则引擎（免费AI解析） =====
+        function ruleBasedAnalysis(question, wrong, correct) {
+            const q = question.toLowerCase();
+            const w = wrong.toLowerCase();
+            const c = correct.toLowerCase();
+
+            let analysis = '【错因分析】\n';
+            let suggestions = '【改进建议】\n';
+            let found = false;
+
+            // 检查是否包含数字（可能涉及计算）
+            const hasNum = /[0-9]/.test(q) || /[0-9]/.test(w) || /[0-9]/.test(c);
+
+            if (hasNum) {
+                // 尝试判断：如果错答和正答数字相近，可能是计算细节错误
+                const numW = w.replace(/[^0-9.]/g, '');
+                const numC = c.replace(/[^0-9.]/g, '');
+                if (numW && numC && numW !== numC) {
+                    if (numW.length === numC.length || Math.abs(parseFloat(numW) - parseFloat(numC)) < 10) {
+                        analysis += '• 可能为计算过程中的细节错误（如进位、退位、小数点位置）。\n';
+                        suggestions += '• 建议用草稿纸分步计算，每步验证，并代入原题检查。\n';
+                        found = true;
+                    } else {
+                        analysis += '• 可能为公式或概念理解错误，导致答案偏差较大。\n';
+                        suggestions += '• 建议回顾相关知识点，重新理解公式的适用条件。\n';
+                        found = true;
+                    }
+                }
+            }
+
+            // 符号错误检测
+            if ((w.includes('+') && c.includes('-')) || (w.includes('-') && c.includes('+')) ||
+                (w.includes('正') && c.includes('负')) || (w.includes('负') && c.includes('正'))) {
+                analysis += '• 可能存在正负号混淆。\n';
+                suggestions += '• 建议检查符号规则，尤其注意移项、去括号时的符号变化。\n';
+                found = true;
+            }
+
+            // 单位错误
+            if (/米|厘米|千米|公斤|克|升|毫升|小时|分钟/.test(q)) {
+                analysis += '• 可能涉及单位换算问题。\n';
+                suggestions += '• 建议牢记各单位间的换算关系，做题时统一单位后再计算。\n';
+                found = true;
+            }
+
+            // 审题错误：如果错答完全没包含正答的关键词
+            const cKeywords = c.split(/[\s,，、。.]+/).filter(w => w.length > 1);
+            let keywordMatch = false;
+            for (const kw of cKeywords) {
+                if (w.includes(kw)) { keywordMatch = true; break; }
+            }
+            if (!keywordMatch && cKeywords.length > 0 && w.length > 0) {
+                analysis += '• 可能没有仔细审题，回答偏离了题目要求。\n';
+                suggestions += '• 建议圈画题目关键词，明确问题要求后再作答。\n';
+                found = true;
+            }
+
+            if (!found) {
+                analysis += '• 请仔细对比你的答案和正确答案，找出具体差异。\n';
+                suggestions += '• 建议回顾相关知识，并找2-3道同类题巩固练习。\n';
+            }
+
+            return analysis + '\n' + suggestions;
+        }
+
+        function detectErrorType(question, wrong, correct) {
+            const q = question.toLowerCase();
+            const w = wrong.toLowerCase();
+            const c = correct.toLowerCase();
+
+            if (/计算|求和|差|积|商|除以|加|减|乘|除|等于/.test(q)) {
+                return '计算失误';
+            }
+            if (/概念|定义|性质|特征|属于|不属于/.test(q)) {
+                return '概念不清';
+            }
+            if (/审题|题意|条件|要求|根据/.test(q)) {
+                return '审题错误';
+            }
+            if (/公式|定理|法则|定律/.test(q)) {
+                return '公式记错';
+            }
+            // 如果错答和正答差异很大
+            if (w.length > 0 && c.length > 0 && !w.includes(c.substring(0, 2)) && !c.includes(w.substring(0, 2))) {
+                return '理解偏差';
+            }
+            return '未分类';
+        }
+
+        // ===== 渲染函数 =====
+        function renderStats() {
+            const container = document.getElementById('statsContent');
+            const list = DB.getWrongAnswers();
+            const total = list.length;
+
+            // 统计各学科
+            const subjectMap = {};
+            const typeMap = {};
+            list.forEach(item => {
+                subjectMap[item.subject] = (subjectMap[item.subject] || 0) + 1;
+                typeMap[item.errorType] = (typeMap[item.errorType] || 0) + 1;
+            });
+
+            let html = `<p class="stat-total">📚 总错题：${total} 题</p>`;
+            const subjects = Object.keys(subjectMap).sort();
+            subjects.forEach(s => {
+                html += `<p>📘 ${s}：${subjectMap[s]} 题</p>`;
+            });
+            if (subjects.length === 0) {
+                html += `<p style="color:var(--text-light);">暂无数据</p>`;
+            }
+            html += '<hr style="margin:6px 0;border-color:var(--bg)">';
+            const types = Object.keys(typeMap).sort();
+            types.forEach(t => {
+                html += `<p>🏷️ ${t}：${typeMap[t]} 题</p>`;
+            });
+            if (types.length === 0) {
+                html += `<p style="color:var(--text-light);">暂无数据</p>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function renderSubjectFilters() {
+            const container = document.getElementById('subjectList');
+            const list = DB.getWrongAnswers();
+            const subjectMap = {};
+            list.forEach(item => {
+                subjectMap[item.subject] = (subjectMap[item.subject] || 0) + 1;
+            });
+            const subjects = Object.keys(subjectMap).sort();
+            if (subjects.length === 0) {
+                container.innerHTML = '<p style="font-size:13px;color:var(--text-light);">暂无学科数据</p>';
+                return;
+            }
+            container.innerHTML = subjects.map(s =>
+                `<button class="filter-btn" data-subject="${s}">📘 ${s}（${subjectMap[s]}）</button>`
+            ).join('');
+        }
+
+        // 当前分页和筛选状态
+        let currentPage = 1;
+        let currentSubject = 'all';
+        const PAGE_SIZE = 10;
+        let editingId = null;
+
+        function renderList() {
+            const container = document.getElementById('wrongList');
+            const totalSpan = document.getElementById('totalCount');
+
+            let list = DB.getWrongAnswers();
+            // 筛选
+            if (currentSubject !== 'all') {
+                list = list.filter(item => item.subject === currentSubject);
+            }
+            // 按时间倒序
+            list = list.sort((a, b) => b.id.localeCompare(a.id));
+
+            totalSpan.textContent = `共 ${list.length} 题`;
+
+            if (list.length === 0) {
+                container.innerHTML = '<div class="empty-state">📭 暂无错题，赶快添加吧！</div>';
+                document.getElementById('pagination').innerHTML = '';
+                return;
+            }
+
+            // 分页
+            const totalPages = Math.ceil(list.length / PAGE_SIZE);
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+            const start = (currentPage - 1) * PAGE_SIZE;
+            const pageItems = list.slice(start, start + PAGE_SIZE);
+
+            container.innerHTML = pageItems.map(item => `
+                <div class="wrong-item" data-id="${item.id}">
+                    <div class="wrong-item-header">
+                        <span class="wrong-item-subject">📘 ${item.subject}</span>
+                        <span class="wrong-item-time">${item.createdAt || formatTime(Date.now())}</span>
+                    </div>
+                    <div class="wrong-item-question">${escapeHtml(item.question)}</div>
+                    <div class="wrong-item-tags">
+                        <span class="tag tag-wrong">❌ ${escapeHtml(item.wrongAnswer)}</span>
+                        <span class="tag tag-correct">✅ ${escapeHtml(item.correctAnswer)}</span>
+                        <span class="tag tag-error-type">${escapeHtml(item.errorType || '未分类')}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            // 点击查看详情
+            container.querySelectorAll('.wrong-item').forEach(el => {
+                el.addEventListener('click', function() {
+                    showDetail(this.dataset.id);
+                });
+            });
+
+            // 渲染分页
+            renderPagination(totalPages);
+        }
+
+        function renderPagination(totalPages) {
+            const container = document.getElementById('pagination');
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            let html = `<button ${currentPage === 1 ? 'disabled' : ''} data-page="${currentPage - 1}">上一页</button>`;
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button class="${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+            }
+            html += `<button ${currentPage === totalPages ? 'disabled' : ''} data-page="${currentPage + 1}">下一页</button>`;
+            container.innerHTML = html;
+
+            container.querySelectorAll('button[data-page]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const page = parseInt(this.dataset.page);
+                    if (!isNaN(page) && page >= 1 && page <= totalPages) {
+                        currentPage = page;
+                        renderList();
+                    }
+                });
+            });
+        }
+
+        // 简单的防XSS
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ===== 详情弹窗 =====
+        function showDetail(id) {
+            const list = DB.getWrongAnswers();
+            const item = list.find(i => i.id === id);
+            if (!item) {
+                alert('错题不存在');
+                return;
+            }
+
+            const container = document.getElementById('detailContent');
+            container.innerHTML = `
+                <h2 style="margin-bottom:12px;font-size:20px;">📘 ${escapeHtml(item.subject)}</h2>
+                <p><span class="detail-label">题目：</span>${escapeHtml(item.question)}</p>
+                <p><span class="detail-label detail-wrong">❌ 错误答案：</span>${escapeHtml(item.wrongAnswer)}</p>
+                <p><span class="detail-label detail-correct">✅ 正确答案：</span>${escapeHtml(item.correctAnswer)}</p>
+                <p><span class="detail-label">📝 解析：</span>${escapeHtml(item.analysis) || '暂无解析'}</p>
+                <p><span class="detail-label">🏷️ 类型：</span>${escapeHtml(item.errorType || '未分类')}</p>
+                <p style="color:var(--text-light);font-size:13px;margin-top:6px;">添加于：${item.createdAt || formatTime(Date.now())}</p>
+            `;
+
+            document.getElementById('editBtn').dataset.id = id;
+            document.getElementById('deleteBtn').dataset.id = id;
+            document.getElementById('detailModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('detailModal').classList.remove('show');
+        }
+
+        // ===== 增删改 =====
+        function addWrongAnswer(e) {
+            e.preventDefault();
+            const subject = document.getElementById('subject').value;
+            const question = document.getElementById('question').value.trim();
+            const wrongAnswer = document.getElementById('wrongAnswer').value.trim();
+            const correctAnswer = document.getElementById('correctAnswer').value.trim();
+            const analysis = document.getElementById('analysis').value.trim();
+            const errorType = document.getElementById('errorType').value;
+
+            if (!subject || !question || !wrongAnswer || !correctAnswer) {
+                alert('请填写完整信息（学科、题目、错误答案、正确答案为必填）');
+                return;
+            }
+
+            const list = DB.getWrongAnswers();
+            const newItem = {
+                id: generateId(),
+                subject,
+                question,
+                wrongAnswer,
+                correctAnswer,
+                analysis,
+                errorType,
+                createdAt: formatTime(Date.now())
+            };
+
+            // 如果是编辑模式
+            if (editingId) {
+                const idx = list.findIndex(i => i.id === editingId);
+                if (idx !== -1) {
+                    list[idx] = { ...list[idx], ...newItem, id: editingId };
+                }
+                editingId = null;
+                document.querySelector('#wrongForm .btn-primary').textContent = '✅ 添加错题';
+            } else {
+                list.unshift(newItem);
+            }
+
+            DB.saveWrongAnswers(list);
+            document.getElementById('wrongForm').reset();
+            document.getElementById('subject').value = '';
+            document.getElementById('errorType').value = '未分类';
+            currentPage = 1;
+            renderAll();
+            alert(editingId ? '错题更新成功！' : '错题添加成功！');
+            editingId = null;
+            document.querySelector('#wrongForm .btn-primary').textContent = '✅ 添加错题';
+        }
+
+        function deleteWrongAnswer(id) {
+            if (!confirm('确定要删除这道错题吗？')) return;
+            let list = DB.getWrongAnswers();
+            list = list.filter(i => i.id !== id);
+            DB.saveWrongAnswers(list);
+            closeModal();
+            renderAll();
+        }
+
+        function editWrongAnswer(id) {
+            const list = DB.getWrongAnswers();
+            const item = list.find(i => i.id === id);
+            if (!item) return;
+
+            document.getElementById('subject').value = item.subject;
+            document.getElementById('question').value = item.question;
+            document.getElementById('wrongAnswer').value = item.wrongAnswer;
+            document.getElementById('correctAnswer').value = item.correctAnswer;
+            document.getElementById('analysis').value = item.analysis || '';
+            document.getElementById('errorType').value = item.errorType || '未分类';
+            editingId = id;
+            document.querySelector('#wrongForm .btn-primary').textContent = '✅ 更新错题';
+            closeModal();
+            document.querySelector('.add-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ===== AI解析 =====
+        function handleAIAnalyze() {
+            const question = document.getElementById('question').value.trim();
+            const wrongAnswer = document.getElementById('wrongAnswer').value.trim();
+            const correctAnswer = document.getElementById('correctAnswer').value.trim();
+
+            if (!question || !wrongAnswer || !correctAnswer) {
+                alert('请先填写题目、错误答案和正确答案');
+                return;
+            }
+
+            const btn = document.getElementById('aiAnalyzeBtn');
+            btn.textContent = '⏳ 分析中...';
+            btn.disabled = true;
+
+            // 使用微任务模拟异步，让UI更新
+            setTimeout(() => {
+                try {
+                    const analysis = ruleBasedAnalysis(question, wrongAnswer, correctAnswer);
+                    document.getElementById('analysis').value = analysis;
+                    const errorType = detectErrorType(question, wrongAnswer, correctAnswer);
+                    document.getElementById('errorType').value = errorType;
+                } catch (err) {
+                    alert('解析失败：' + err.message);
+                } finally {
+                    btn.textContent = '🤖 AI智能解析';
+                    btn.disabled = false;
+                }
+            }, 100);
+        }
+
+        // ===== 筛选切换 =====
+        function setFilter(subject) {
+            currentSubject = subject;
+            currentPage = 1;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                if (b.dataset.subject === subject) b.classList.add('active');
+            });
+            renderList();
+        }
+
+        // ===== 渲染全部 =====
+        function renderAll() {
+            renderStats();
+            renderSubjectFilters();
+            renderList();
+            // 同步筛选按钮状态
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.subject === currentSubject);
+            });
+        }
+
+        // ===== 登录/注册 =====
+        function handleLogin(e) {
+            e.preventDefault();
+            hideAuthMsg();
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            if (!username || !password) {
+                showAuthMsg('请填写完整信息', 'error');
+                return;
+            }
+
+            const users = DB.getUsers();
+            if (!users[username]) {
+                showAuthMsg('用户不存在，请先注册', 'error');
+                return;
+            }
+            if (users[username].password !== password) {
+                showAuthMsg('密码错误', 'error');
+                return;
+            }
+
+            DB.setCurrentUser(username);
+            document.getElementById('usernameDisplay').textContent = username;
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('mainPage').style.display = 'block';
+            renderAll();
+        }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            hideAuthMsg();
+            const username = document.getElementById('registerUsername').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
+            const password = document.getElementById('registerPassword').value.trim();
+
+            if (!username || !email || !password) {
+                showAuthMsg('请填写完整信息', 'error');
+                return;
+            }
+            if (password.length < 6) {
+                showAuthMsg('密码至少6位', 'error');
+                return;
+            }
+            if (!email.includes('@')) {
+                showAuthMsg('请输入有效的邮箱地址', 'error');
+                return;
+            }
+
+            const users = DB.getUsers();
+            if (users[username]) {
+                showAuthMsg('用户名已存在', 'error');
+                return;
+            }
+
+            users[username] = {
+                password: password,
+                email: email,
+                wrongAnswers: []
+            };
+            DB.saveUsers(users);
+            showAuthMsg('注册成功！请登录', 'success');
+            // 切换到登录
+            document.querySelector('.tab-btn[data-tab="login"]').click();
+            document.getElementById('loginUsername').value = username;
+            document.getElementById('registerForm').reset();
+        }
+
+        function handleLogout() {
+            if (confirm('确定要退出吗？')) {
+                DB.clearCurrentUser();
+                document.getElementById('mainPage').style.display = 'none';
+                document.getElementById('loginPage').style.display = 'flex';
+                document.getElementById('loginForm').reset();
+                hideAuthMsg();
+            }
+        }
+
+        // ===== 页面初始化 =====
+        function initApp() {
+            // 检查是否已登录
+            const user = DB.getCurrentUser();
+            if (user) {
+                document.getElementById('usernameDisplay').textContent = user.username;
+                document.getElementById('loginPage').style.display = 'none';
+                document.getElementById('mainPage').style.display = 'block';
+                renderAll();
+            } else {
+                document.getElementById('loginPage').style.display = 'flex';
+                document.getElementById('mainPage').style.display = 'none';
+            }
+
+            // 初始化语音
+            initSpeech();
+
+            // ---- 绑定事件 ----
+
+            // 登录
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+
+            // 注册
+            document.getElementById('registerForm').addEventListener('submit', handleRegister);
+
+            // Tab切换
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    const tab = this.dataset.tab;
+                    document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+                    document.getElementById(tab + 'Form').classList.add('active');
+                    hideAuthMsg();
+                });
+            });
+
+            // 退出
+            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+
+            // 表单折叠
+            document.getElementById('toggleFormBtn').addEventListener('click', function() {
+                const form = document.getElementById('wrongForm');
+                const isHidden = form.style.display === 'none';
+                form.style.display = isHidden ? 'grid' : 'none';
+                this.textContent = isHidden ? '收起' : '展开';
+            });
+
+            // 添加错题
+            document.getElementById('wrongForm').addEventListener('submit', addWrongAnswer);
+
+            // AI解析
+            document.getElementById('aiAnalyzeBtn').addEventListener('click', handleAIAnalyze);
+
+            // 语音按钮（事件委托）
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('voice-btn')) {
+                    const target = e.target.dataset.target;
+                    if (target) toggleVoice(target);
+                }
+            });
+
+            // 筛选按钮（事件委托）
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('filter-btn')) {
+                    const subject = e.target.dataset.subject;
+                    if (subject) setFilter(subject);
+                }
+            });
+
+            // 模态框关闭
+            document.getElementById('modalClose').addEventListener('click', closeModal);
+            document.getElementById('detailModal').addEventListener('click', function(e) {
+                if (e.target === this) closeModal();
+            });
+
+            // 编辑
+            document.getElementById('editBtn').addEventListener('click', function() {
+                const id = this.dataset.id;
+                if (id) editWrongAnswer(id);
+            });
+
+            // 删除
+            document.getElementById('deleteBtn').addEventListener('click', function() {
+                const id = this.dataset.id;
+                if (id) deleteWrongAnswer(id);
+            });
+
+            // 回车键在登录/注册表单中不触发表单默认提交
+            document.querySelectorAll('.auth-form input').forEach(inp => {
+                inp.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.closest('form').querySelector('.btn-primary').click();
+                    }
+                });
+            });
+        }
+
+        // 页面加载完成后启动
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
