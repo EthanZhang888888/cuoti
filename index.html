@@ -185,7 +185,7 @@
         .nav-user {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: wrap;
         }
         .nav-user span {
@@ -213,6 +213,13 @@
         }
         .nav-btn.import-btn:hover {
             background: #A7F3D0;
+        }
+        .nav-btn.print-btn {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+        .nav-btn.print-btn:hover {
+            background: #FDE68A;
         }
         .nav-btn.logout-btn {
             background: #FEE2E2;
@@ -373,11 +380,15 @@
             cursor: not-allowed;
         }
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
         }
 
-        /* 语音状态提示 */
         .voice-status {
             font-size: 12px;
             color: var(--text-light);
@@ -630,6 +641,98 @@
             background: #991B1B;
         }
 
+        /* ===== 打印样式 ===== */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printArea,
+            #printArea * {
+                visibility: visible;
+            }
+            #printArea {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 40px 50px;
+                background: white;
+                z-index: 99999;
+                font-size: 14px;
+                line-height: 1.8;
+            }
+            #printArea .print-header {
+                text-align: center;
+                border-bottom: 3px double #333;
+                padding-bottom: 16px;
+                margin-bottom: 24px;
+            }
+            #printArea .print-header h1 {
+                font-size: 24px;
+                color: #1F2937;
+            }
+            #printArea .print-header p {
+                color: #6B7280;
+                font-size: 13px;
+                margin-top: 4px;
+            }
+            #printArea .print-subject {
+                font-size: 18px;
+                font-weight: 700;
+                color: #4F46E5;
+                margin: 20px 0 12px 0;
+                padding-bottom: 6px;
+                border-bottom: 2px solid #4F46E5;
+            }
+            #printArea .print-item {
+                margin-bottom: 18px;
+                padding: 12px 16px;
+                border: 1px solid #E5E7EB;
+                border-radius: 6px;
+                page-break-inside: avoid;
+            }
+            #printArea .print-item .p-label {
+                font-weight: 600;
+                color: #374151;
+            }
+            #printArea .print-item .p-wrong {
+                color: #DC2626;
+            }
+            #printArea .print-item .p-correct {
+                color: #16A34A;
+            }
+            #printArea .print-item .p-analysis {
+                color: #6B7280;
+                font-size: 13px;
+                margin-top: 4px;
+                padding-top: 4px;
+                border-top: 1px dashed #E5E7EB;
+            }
+            #printArea .print-footer {
+                text-align: center;
+                color: #9CA3AF;
+                font-size: 12px;
+                border-top: 1px solid #E5E7EB;
+                padding-top: 16px;
+                margin-top: 24px;
+            }
+            .no-print {
+                display: none !important;
+            }
+            /* 打印时隐藏滚动条 */
+            ::-webkit-scrollbar {
+                display: none;
+            }
+        }
+
+        /* 打印预览区域（屏幕上看不到） */
+        #printArea {
+            display: none;
+        }
+        #printArea.show {
+            display: block;
+        }
+
         /* ===== 响应式 ===== */
         @media (max-width: 1024px) {
             .main-container {
@@ -666,6 +769,14 @@
             .nav-btn {
                 font-size: 11px;
                 padding: 3px 10px;
+            }
+            @media print {
+                #printArea {
+                    padding: 20px;
+                }
+                #printArea .print-item {
+                    padding: 8px 12px;
+                }
             }
         }
     </style>
@@ -721,6 +832,7 @@
                 <div class="nav-brand">📚 错题本</div>
                 <div class="nav-user">
                     <span id="usernameDisplay">用户</span>
+                    <button class="nav-btn print-btn" id="printBtn">🖨️ 打印</button>
                     <button class="nav-btn export-btn" id="exportBtn">📤 导出</button>
                     <button class="nav-btn import-btn" id="importBtn">📥 导入</button>
                     <input type="file" id="importFileInput" accept=".json">
@@ -835,6 +947,9 @@
             </main>
         </div>
     </div>
+
+    <!-- ==================== 打印区域 ==================== -->
+    <div id="printArea"></div>
 
     <!-- ==================== 详情弹窗 ==================== -->
     <div id="detailModal" class="modal">
@@ -1008,23 +1123,19 @@
             const btn = document.querySelector(`.voice-btn[data-target="${targetId}"]`);
             if (!btn) return;
 
-            // 如果正在录音，停止
             if (isRecording) {
                 stopVoiceRecording(true);
                 return;
             }
 
-            // 确保旧的识别器已清理
             if (recognition) {
                 try { recognition.abort(); } catch (e) {}
                 recognition = null;
             }
 
-            // 清空之前的状态
             finalResult = '';
             setVoiceStatus(targetId, '🎤 正在听...', 'active');
 
-            // 创建新的识别器
             recognition = createRecognition();
             if (!recognition) {
                 showToast('语音识别初始化失败', 'error');
@@ -1052,13 +1163,10 @@
                         interim += e.results[i][0].transcript;
                     }
                 }
-                // 只保存最终结果
                 if (final) {
                     finalResult = final;
-                    // 实时显示最终结果（但不覆盖输入框）
                     setVoiceStatus(targetId, '✅ 已识别：' + final, 'done');
                 } else if (interim) {
-                    // 显示中间状态（但不写入输入框）
                     setVoiceStatus(targetId, '⏳ ' + interim, 'active');
                 }
             };
@@ -1081,7 +1189,6 @@
             };
 
             recognition.onend = function() {
-                // 如果有最终结果，写入输入框
                 if (finalResult && currentVoiceTarget) {
                     const el = document.getElementById(currentVoiceTarget);
                     if (el) {
@@ -1094,10 +1201,8 @@
                         showToast('✅ 语音录入完成', 'success');
                     }
                 } else if (isRecording && currentVoiceTarget) {
-                    // 没有结果，显示提示
                     setVoiceStatus(currentVoiceTarget, '⏳ 未识别到有效语音，请重试', '');
                 }
-                // 延迟清除状态
                 clearTimeout(statusTimer);
                 statusTimer = setTimeout(() => {
                     const el = getStatusEl(currentVoiceTarget);
@@ -1435,7 +1540,6 @@
             document.getElementById('wrongForm').reset();
             document.getElementById('subject').value = '';
             document.getElementById('errorType').value = '未分类';
-            // 清空所有语音状态
             document.querySelectorAll('.voice-status').forEach(el => {
                 el.textContent = '';
                 el.className = 'voice-status';
@@ -1526,6 +1630,89 @@
             document.querySelectorAll('.filter-btn').forEach(b => {
                 b.classList.toggle('active', b.dataset.subject === currentSubject);
             });
+        }
+
+        // ============================================================
+        //  打印功能
+        // ============================================================
+
+        function generatePrintHTML() {
+            const user = DB.getCurrentUser();
+            if (!user) {
+                showToast('请先登录', 'error');
+                return null;
+            }
+
+            let list = DB.getWrongAnswers();
+            if (currentSubject !== 'all') {
+                list = list.filter(item => item.subject === currentSubject);
+            }
+            list = list.sort((a, b) => b.id.localeCompare(a.id));
+
+            if (list.length === 0) {
+                showToast('没有错题可打印', 'error');
+                return null;
+            }
+
+            // 按学科分组
+            const grouped = {};
+            list.forEach(item => {
+                if (!grouped[item.subject]) grouped[item.subject] = [];
+                grouped[item.subject].push(item);
+            });
+
+            const subjectNames = Object.keys(grouped).sort();
+
+            let html = `
+                <div class="print-header">
+                    <h1>📚 错题本 · 打印版</h1>
+                    <p>用户名：${escapeHtml(user.username)} &nbsp;|&nbsp; 打印时间：${formatTime(Date.now())}</p>
+                    <p style="font-size:13px;color:#6B7280;">共 ${list.length} 道错题 ${currentSubject !== 'all' ? '· 筛选学科：' + currentSubject : ''}</p>
+                </div>
+            `;
+
+            subjectNames.forEach(subject => {
+                const items = grouped[subject];
+                html += `<div class="print-subject">📘 ${subject}（${items.length}题）</div>`;
+                items.forEach((item, index) => {
+                    html += `
+                        <div class="print-item">
+                            <div><span class="p-label">${index + 1}. 题目：</span>${escapeHtml(item.question)}</div>
+                            <div><span class="p-label p-wrong">❌ 错误答案：</span>${escapeHtml(item.wrongAnswer)}</div>
+                            <div><span class="p-label p-correct">✅ 正确答案：</span>${escapeHtml(item.correctAnswer)}</div>
+                            ${item.analysis ? `<div class="p-analysis"><span class="p-label">📝 解析：</span>${escapeHtml(item.analysis)}</div>` : ''}
+                            <div style="font-size:12px;color:#9CA3AF;margin-top:4px;">类型：${escapeHtml(item.errorType || '未分类')} &nbsp;|&nbsp; ${item.createdAt || ''}</div>
+                        </div>
+                    `;
+                });
+            });
+
+            html += `
+                <div class="print-footer">
+                    共 ${list.length} 道错题 · 打印于 ${formatTime(Date.now())}
+                </div>
+            `;
+
+            return html;
+        }
+
+        function handlePrint() {
+            const html = generatePrintHTML();
+            if (!html) return;
+
+            const printArea = document.getElementById('printArea');
+            printArea.innerHTML = html;
+            printArea.classList.add('show');
+
+            // 延迟执行打印
+            setTimeout(() => {
+                window.print();
+                // 打印完成后隐藏打印区域
+                setTimeout(() => {
+                    printArea.classList.remove('show');
+                    printArea.innerHTML = '';
+                }, 500);
+            }, 300);
         }
 
         // ============================================================
@@ -1767,6 +1954,9 @@
                 const id = this.dataset.id;
                 if (id) deleteWrongAnswer(id);
             });
+
+            // 打印按钮
+            document.getElementById('printBtn').addEventListener('click', handlePrint);
 
             // 导出按钮
             document.getElementById('exportBtn').addEventListener('click', exportData);
